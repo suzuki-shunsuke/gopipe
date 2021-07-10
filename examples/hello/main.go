@@ -20,6 +20,7 @@ func core() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	workflow := gopipe.Workflow{
+		Name: "main",
 		Tasks: []gopipe.Task{
 			{
 				Name: "init",

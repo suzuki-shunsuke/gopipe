@@ -2,6 +2,7 @@ package gopipe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -12,8 +13,32 @@ type Workflow struct {
 	Tasks []Task
 }
 
+func (workflow *Workflow) Validate() error {
+	if workflow.Name == "" {
+		return errors.New("Workflow.Name is required")
+	}
+	names := make(map[string]struct{}, len(workflow.Tasks))
+	for _, task := range workflow.Tasks {
+		if _, ok := names[task.Name]; ok {
+			return fmt.Errorf("task name %s is duplicated", task.Name)
+		}
+		names[task.Name] = struct{}{}
+		if err := task.Validate(); err != nil {
+			return fmt.Errorf("task %s is invalid: %w", task.Name, err)
+		}
+	}
+	return nil
+}
+
 func (workflow *Workflow) Run(ctx context.Context) error {
 	log.Print("===> workflow " + workflow.Name + " starts")
+	startTime := time.Now()
+	defer func() {
+		log.Printf("===> %v: workflow %s ended", time.Since(startTime), workflow.Name)
+	}()
+	if err := workflow.Validate(); err != nil {
+		return err
+	}
 	for _, task := range workflow.Tasks {
 		t := time.Now()
 		log.Print("===> task " + task.Name + " starts")
