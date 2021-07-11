@@ -10,7 +10,8 @@ import (
 type Task struct {
 	Name  string
 	If    TaskIf
-	Steps []Step
+	Steps []*Step
+	Args  GetArgs
 }
 
 type TaskIf func(ctx context.Context, args *Args) (bool, error)
@@ -42,7 +43,7 @@ func (task *Task) Run(ctx context.Context, args *Args) error {
 				continue
 			}
 		}
-		if err := step.Action(ctx, args); err != nil {
+		if err := step.Run(ctx, args); err != nil {
 			return err
 		}
 	}

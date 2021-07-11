@@ -3,6 +3,8 @@ package gopipe
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"time"
 
@@ -17,6 +19,12 @@ type CommandParam struct {
 
 func Command(cmd *exec.Cmd, param *CommandParam, opts ...CommandOpt) Action {
 	return func(ctx context.Context, args *Args) error {
+		if cmd.Stdout == nil {
+			cmd.Stdout = os.Stdout
+		}
+		if cmd.Stderr == nil {
+			cmd.Stderr = os.Stderr
+		}
 		for _, opt := range opts {
 			if opt == nil {
 				continue
@@ -52,7 +60,14 @@ func Env(name, value string) CommandOpt {
 	}
 }
 
-func Envs(m map[string]string) CommandOpt {
+func Envs(envs []string) CommandOpt {
+	return func(cmd *exec.Cmd) error {
+		cmd.Env = append(cmd.Env, envs...)
+		return nil
+	}
+}
+
+func EnvMap(m map[string]string) CommandOpt {
 	return func(cmd *exec.Cmd) error {
 		for name, value := range m {
 			cmd.Env = append(cmd.Env, name+"="+value)
@@ -64,6 +79,20 @@ func Envs(m map[string]string) CommandOpt {
 func Dir(dir string) CommandOpt {
 	return func(cmd *exec.Cmd) error {
 		cmd.Dir = dir
+		return nil
+	}
+}
+
+func Stdout(w io.Writer) CommandOpt {
+	return func(cmd *exec.Cmd) error {
+		cmd.Stdout = w
+		return nil
+	}
+}
+
+func Stderr(w io.Writer) CommandOpt {
+	return func(cmd *exec.Cmd) error {
+		cmd.Stderr = w
 		return nil
 	}
 }

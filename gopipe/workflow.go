@@ -10,7 +10,7 @@ import (
 
 type Workflow struct {
 	Name  string
-	Tasks []Task
+	Tasks []*Task
 }
 
 func (workflow *Workflow) Validate() error {
@@ -31,9 +31,6 @@ func (workflow *Workflow) Validate() error {
 }
 
 func (workflow *Workflow) Run(ctx context.Context, args *Args) error {
-	if args == nil {
-		args = &Args{}
-	}
 	log.Print("===> workflow " + workflow.Name + " starts")
 	startTime := time.Now()
 	defer func() {
@@ -42,9 +39,20 @@ func (workflow *Workflow) Run(ctx context.Context, args *Args) error {
 	if err := workflow.Validate(); err != nil {
 		return err
 	}
+	argsMap := map[string]*Args{
+		"_": args,
+	}
 	for _, task := range workflow.Tasks {
 		t := time.Now()
 		log.Print("===> task " + task.Name + " starts")
+		args := &Args{}
+		if task.Args != nil {
+			a, err := task.Args(argsMap)
+			if err != nil {
+				return err
+			}
+			args = a
+		}
 		if task.If != nil {
 			b, err := task.If(ctx, args)
 			if err != nil {
@@ -57,6 +65,7 @@ func (workflow *Workflow) Run(ctx context.Context, args *Args) error {
 		}
 		err := task.Run(ctx, args)
 		duration := time.Since(t)
+		argsMap[task.Name] = args
 		if err != nil {
 			return fmt.Errorf("%v: task %s is failed: %w", duration, task.Name, err)
 		}

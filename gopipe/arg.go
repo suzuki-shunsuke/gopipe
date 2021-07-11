@@ -9,6 +9,8 @@ type Args struct {
 	Args map[string]Arg
 }
 
+type GetArgs func(mArgs map[string]*Args) (*Args, error)
+
 func (args *Args) Set(name string, value interface{}) {
 	if args.Args == nil {
 		args.Args = map[string]Arg{}
