@@ -30,7 +30,10 @@ func (workflow *Workflow) Validate() error {
 	return nil
 }
 
-func (workflow *Workflow) Run(ctx context.Context) error {
+func (workflow *Workflow) Run(ctx context.Context, args *Args) error {
+	if args == nil {
+		args = &Args{}
+	}
 	log.Print("===> workflow " + workflow.Name + " starts")
 	startTime := time.Now()
 	defer func() {
@@ -42,7 +45,17 @@ func (workflow *Workflow) Run(ctx context.Context) error {
 	for _, task := range workflow.Tasks {
 		t := time.Now()
 		log.Print("===> task " + task.Name + " starts")
-		err := task.Run(ctx)
+		if task.If != nil {
+			b, err := task.If(ctx, args)
+			if err != nil {
+				return err
+			}
+			if !b {
+				log.Printf("===> task %s is skipped", task.Name)
+				continue
+			}
+		}
+		err := task.Run(ctx, args)
 		duration := time.Since(t)
 		if err != nil {
 			return fmt.Errorf("%v: task %s is failed: %w", duration, task.Name, err)

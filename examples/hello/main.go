@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 
 	"github.com/suzuki-shunsuke/gopipe/gopipe"
@@ -24,19 +25,35 @@ func core() error {
 		Tasks: []gopipe.Task{
 			{
 				Name: "init",
-				Action: func(ctx context.Context) error {
-					fmt.Println("init")
-					return nil
+				Steps: []gopipe.Step{
+					{
+						Name: "init",
+						Action: func(ctx context.Context, args *gopipe.Args) error {
+							fmt.Println("init")
+							args.Set("name", "yoo")
+							return nil
+						},
+					},
 				},
 			},
 			{
-				Name: "test",
-				Action: func(ctx context.Context) error {
-					fmt.Println("test")
-					return nil
+				Name: "go vet",
+				Steps: []gopipe.Step{
+					{
+						Name: "go vet",
+						Action: gopipe.Command(exec.Command("go", "vet"), nil,
+							gopipe.Dir("."),
+							gopipe.Env("FOO", "FOO")),
+						If: func(ctx context.Context, args *gopipe.Args) (bool, error) {
+							fmt.Println("name:", args.GetString("name"))
+							return args.Get("branch") != "main", nil
+						},
+					},
 				},
 			},
 		},
 	}
-	return workflow.Run(ctx)
+	args := &gopipe.Args{}
+	args.Set("branch", "main")
+	return workflow.Run(ctx, args)
 }
