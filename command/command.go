@@ -1,4 +1,4 @@
-package gopipe
+package command
 
 import (
 	"context"
@@ -9,16 +9,15 @@ import (
 	"time"
 
 	"github.com/suzuki-shunsuke/go-timeout/timeout"
+	"github.com/suzuki-shunsuke/gopipe/gopipe"
 )
-
-type Action func(ctx context.Context, args *Args) error
 
 type CommandParam struct {
 	Timeout time.Duration
 }
 
-func Command(cmd *exec.Cmd, param *CommandParam, opts ...CommandOpt) Action {
-	return func(ctx context.Context, args *Args) error {
+func Command(cmd *exec.Cmd, param *CommandParam, opts ...CommandOpt) gopipe.Action {
+	return func(ctx context.Context, args *gopipe.Args) error {
 		if cmd.Stdout == nil {
 			cmd.Stdout = os.Stdout
 		}

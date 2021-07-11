@@ -7,9 +7,11 @@ import (
 
 type Step struct {
 	Name   string
-	Action func(ctx context.Context, args *Args) error
+	Action Action
 	If     StepIf
 }
+
+type Action func(ctx context.Context, args *Args) error
 
 type StepIf func(ctx context.Context, args *Args) (bool, error)
 

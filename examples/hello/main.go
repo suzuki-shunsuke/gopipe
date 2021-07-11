@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"os/signal"
 
+	"github.com/suzuki-shunsuke/gopipe/command"
 	"github.com/suzuki-shunsuke/gopipe/gopipe"
 )
 
@@ -59,10 +60,10 @@ func core() error {
 				Steps: []*gopipe.Step{
 					{
 						Name: "go vet",
-						Action: gopipe.Command(exec.Command("go", "vet"), nil,
-							gopipe.Dir("."),
-							gopipe.Envs(os.Environ()),
-							gopipe.Env("FOO", "FOO"),
+						Action: command.Command(exec.Command("go", "vet"), nil,
+							command.Dir("."),
+							command.Envs(os.Environ()),
+							command.Env("FOO", "FOO"),
 						),
 						If: func(ctx context.Context, args *gopipe.Args) (bool, error) {
 							fmt.Println("name:", args.GetString("name"))
